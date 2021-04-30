@@ -16,12 +16,16 @@
 
 package com.example.android.navigation
 
+import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import android.widget.Toast
+import androidx.core.app.ShareCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.navigation.Navigation
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import com.example.android.navigation.databinding.FragmentGameWonBinding
 
 
@@ -31,6 +35,55 @@ class GameWonFragment : Fragment() {
         // Inflate the layout for this fragment
         val binding: FragmentGameWonBinding = DataBindingUtil.inflate(
                 inflater, R.layout.fragment_game_won, container, false)
+
+        binding.nextMatchButton.setOnClickListener {
+            it.findNavController().navigate(
+                    GameWonFragmentDirections.actionGameWonFragmentToGameFragment())
+        }
+
+        if (arguments != null) {
+            val args = GameWonFragmentArgs.fromBundle(arguments!!)
+            Toast.makeText(
+                context,
+                "NumCorrect: ${args.numCorrect}, NumQuestions: ${args.numQuestions}",
+                Toast.LENGTH_LONG).show()
+        }
+
+        setHasOptionsMenu(true)
+
         return binding.root
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.winner_menu, menu)
+        if (getShareIntent().resolveActivity(activity!!.packageManager) == null) {
+            menu.findItem(R.id.share)?.isVisible = false
+        }
+    }
+
+    private fun getShareIntent() : Intent {
+        val args = GameWonFragmentArgs.fromBundle(arguments!!)
+//        val shareIntent = Intent(Intent.ACTION_SEND)
+//        shareIntent.setType("text/plain").putExtra(
+//            Intent.EXTRA_TEXT,
+//            getString(R.string.share_success_text, args.numCorrect, args.numQuestions))
+
+        return ShareCompat.IntentBuilder
+                .from(activity!!)
+                .setType("text/plain")
+                .setText(getString(R.string.share_success_text, args.numCorrect, args.numQuestions))
+                .intent
+    }
+
+    private fun shareSuccess() {
+        startActivity(getShareIntent())
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.share -> shareSuccess()
+        }
+        return super.onOptionsItemSelected(item)
     }
 }
